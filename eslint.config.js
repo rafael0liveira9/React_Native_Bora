@@ -6,5 +6,8 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ['dist/*'],
+    rules: {
+      'eol-last': 'off', // Desabilita a linha em branco no final do arquivo
+    },
   },
 ]);

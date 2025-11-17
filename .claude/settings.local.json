@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx expo start)",
+      "Bash(cmd /c \"move assets\\images\\my-fit assets\\images\\eai-bora\")",
+      "Bash(ls:*)",
+      "Bash(npx prisma db push)",
+      "Bash(npm install:*)",
+      "Bash(dir /b \"C:\\Users\\rafael\\Desktop\\Rafael\\Bora\\FRONT_BORA\\app\\(tabs)\")",
+      "Bash(taskkill:*)",
+      "Bash(npx expo start:*)",
+      "Bash(npx prisma generate)",
+      "Bash(npx prisma db push:*)",
+      "Bash(cmd /c \"taskkill /F /IM node.exe\")",
+      "Bash(cmd /c \"rmdir /s /q node_modules\\.prisma\")",
+      "Bash(cmd /c \"tasklist | findstr node.exe\")",
+      "Bash(cat:*)",
+      "Bash(timeout:*)",
+      "Bash(cmd /c \"dir node_modules\\.prisma\\client\\query_engine-windows.dll.node 2>nul || echo Arquivo nao existe\")",
+      "Bash(npm uninstall:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(nul)",
+      "Bash(cmd /c \"del /F node_modules\\.prisma\\client\\query_engine-windows.dll.node 2>nul\")",
+      "Bash(cmd /c \"dir node_modules\\.prisma\\client\\index.js 2>nul && echo Cliente existe || echo Cliente nao existe\")",
+      "Bash(dir /b \"app\\(stack)\" 2)",
+      "Bash(dir /b \"app\\(stack)\\profile\" 2)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(dir /b:*)",
+      "Bash(cmd /c \"dir /b prisma\\migrations\")",
+      "Bash(cmd /c \"del remove_objective.sql\")",
+      "Bash(node fix-prisma-connections.js:*)",
+      "Bash(node -e \"const fs = require(''fs''); let c = fs.readFileSync(''./repository/user/index.js'', ''utf8''); c = c.replace(/\\s*await p\\.$disconnect\\(\\);?\\s*/g, '''').replace(/\\s*p\\.$disconnect\\(\\);?\\s*/g, ''''); fs.writeFileSync(''./repository/user/index.js'', c); console.log(''✅ user/index.js fixed'');\")",
+      "Bash(node:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
