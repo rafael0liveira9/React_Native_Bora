@@ -8,6 +8,7 @@ import { MFDefaultCard } from "@/components/eai-bora-ui/cards";
 import { MFPasswordInput, MFTextInput } from "@/components/eai-bora-ui/inputs";
 import { Colors } from "@/constants/Colors";
 import { useTheme } from "@/context/ThemeContext";
+import { useViewMode } from "@/context/ViewModeContext";
 import { login } from "@/service/user";
 import { authStyles } from "@/styles/auth";
 import { globalStyles } from "@/styles/global";
@@ -25,10 +26,11 @@ import {
 import Toast from "react-native-toast-message";
 
 export default function LoginScreen() {
-  const { theme } = useTheme(),
-    [isLoading, setIsLoading] = useState<boolean>(false),
-    [email, setEmail] = useState<string>(""),
-    [password, setPassword] = useState<string>("");
+  const { theme } = useTheme();
+  const { refreshViewMode } = useViewMode();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
 
   const themeColors = Colors[theme];
 
@@ -55,10 +57,21 @@ export default function LoginScreen() {
 
         // Salvar companyId se existir
         if (res?.user?.companyId) {
+          console.log("🏢 LOGIN - Tem companyId:", res.user.companyId);
+          console.log("💾 LOGIN - Salvando no SecureStore...");
           await SecureStore.setItemAsync("userCompanyId", res.user.companyId.toString());
+          console.log("✅ LOGIN - CompanyId salvo com sucesso!");
         } else {
+          console.log("❌ LOGIN - Usuário não tem companyId");
+          console.log("🗑️ LOGIN - Removendo companyId do SecureStore (se existir)...");
           await SecureStore.deleteItemAsync("userCompanyId");
+          console.log("✅ LOGIN - CompanyId removido!");
         }
+
+        // Recarregar ViewMode para atualizar hasCompany
+        console.log("🔄 LOGIN - Recarregando ViewMode...");
+        await refreshViewMode();
+        console.log("✅ LOGIN - ViewMode recarregado!");
 
         Toast.show({
           type: "success",

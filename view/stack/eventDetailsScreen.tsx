@@ -2,7 +2,11 @@ import MFStackEditSubtitle from "@/components/eai-bora-ui/stackEditSubtitle";
 import { Colors } from "@/constants/Colors";
 import { useTheme } from "@/context/ThemeContext";
 import { getEventById } from "@/service/events";
-import { getUserParticipation, upsertParticipation } from "@/service/participation";
+import {
+  getEventParticipations,
+  getUserParticipation,
+  upsertParticipation,
+} from "@/service/participation";
 import { globalStyles } from "@/styles/global";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -33,6 +37,8 @@ export default function EventDetailsScreen() {
   const [token, setToken] = useState<string | null>(null);
   const [participation, setParticipation] = useState<any>(null);
   const [isUpdatingParticipation, setIsUpdatingParticipation] = useState(false);
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [totalParticipants, setTotalParticipants] = useState(0);
 
   useEffect(() => {
     loadEventDetails();
@@ -70,6 +76,20 @@ export default function EventDetailsScreen() {
 
           if (participationResult.participation) {
             setParticipation(participationResult.participation);
+          }
+
+          // Load event participants
+          const participantsResult = await getEventParticipations({
+            eventId: Number(params.eventId),
+            token: t,
+          });
+
+          if (participantsResult.participations) {
+            setParticipants(participantsResult.participations);
+            setTotalParticipants(
+              participantsResult.totalCount ||
+                participantsResult.participations.length
+            );
           }
         } else {
           Toast.show({
@@ -124,7 +144,7 @@ export default function EventDetailsScreen() {
       const formattedTime = formatTime(event.startAt);
       return {
         label: `📅 ${formattedDate} às ${formattedTime}`,
-        color: themeColors.warning
+        color: themeColors.warning,
       };
     } else if (now >= start && now <= end) {
       return { label: "🔥 Acontecendo agora", color: themeColors.danger };
@@ -723,8 +743,155 @@ export default function EventDetailsScreen() {
             </View>
           )}
 
+          {/* Participants Section */}
+          {participants.length > 0 && (
+            <View
+              style={{
+                backgroundColor: themeColors.secondary,
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 20,
+              }}
+            >
+              <MFStackEditSubtitle
+                themeColors={themeColors}
+                title={`👥 Participantes (${totalParticipants})`}
+              />
+
+              <View style={{ marginTop: 12, gap: 10 }}>
+                {participants.map((participant: any) => {
+                  const statusConfig =
+                    participant.status === 2
+                      ? { label: "Está no evento", color: themeColors.success }
+                      : {
+                          label: "Confirmou participação",
+                          color: themeColors.warning,
+                        };
+
+                  return (
+                    <View
+                      key={participant.id}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: themeColors.background,
+                        padding: 12,
+                        borderRadius: 10,
+                      }}
+                    >
+                      {/* User Photo */}
+                      {participant.user.client.photo ? (
+                        <Image
+                          source={{ uri: participant.user.client.photo }}
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 24,
+                            marginRight: 12,
+                          }}
+                        />
+                      ) : (
+                        <View
+                          style={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 24,
+                            backgroundColor: themeColors.primary + "30",
+                            justifyContent: "center",
+                            alignItems: "center",
+                            marginRight: 12,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 20,
+                              fontWeight: "700",
+                              color: themeColors.primary,
+                            }}
+                          >
+                            {participant.user.client.name
+                              .charAt(0)
+                              .toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
+
+                      {/* User Info */}
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            fontSize: 15,
+                            fontWeight: "600",
+                            color: themeColors.text,
+                            marginBottom: 4,
+                          }}
+                        >
+                          {participant.user.client.name}
+                        </Text>
+
+                        {/* Status Badge */}
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            backgroundColor: statusConfig.color + "20",
+                            paddingHorizontal: 10,
+                            paddingVertical: 4,
+                            borderRadius: 6,
+                            alignSelf: "flex-start",
+                          }}
+                        >
+                          <View
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: 3,
+                              backgroundColor: statusConfig.color,
+                              marginRight: 6,
+                            }}
+                          />
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              fontWeight: "600",
+                              color: statusConfig.color,
+                            }}
+                          >
+                            {statusConfig.label}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+
+                {/* Show remaining participants count if more than 30 */}
+                {totalParticipants > 30 && (
+                  <View
+                    style={{
+                      backgroundColor: themeColors.background,
+                      padding: 16,
+                      borderRadius: 10,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: themeColors.textSecondary,
+                      }}
+                    >
+                      + {totalParticipants - 30} participantes
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
           {/* Settings */}
-          <View
+          {/* <View
             style={{
               backgroundColor: themeColors.secondary,
               borderRadius: 12,
@@ -780,7 +947,7 @@ export default function EventDetailsScreen() {
                   : "Métricas Privadas"}
               </Text>
             </View>
-          </View>
+          </View> */}
         </View>
       </ScrollView>
     </View>

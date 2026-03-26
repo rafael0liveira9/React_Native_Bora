@@ -500,14 +500,11 @@ export function MFAddFriendButton({
 
   return (
     <TouchableOpacity
-      onPress={
-        isPressed === true
-          ? () => {}
-          : () => {
-              onPress();
-              setIsPressed(true);
-            }
-      }
+      disabled={type === 2 || type === 3 || isPressed}
+      onPress={() => {
+        onPress();
+        setIsPressed(true);
+      }}
       style={{
         ...(fullWidth
           ? { width: "100%" }
@@ -522,18 +519,19 @@ export function MFAddFriendButton({
           type === 1 || type === 5
             ? themeColors.info
             : type === 2
-            ? themeColors.grey
+            ? themeColors.success
             : type === 3
-            ? themeColors.orange
+            ? themeColors.textSecondary
             : themeColors.success,
         backgroundColor:
           type === 1
             ? themeColors.info
             : type === 2
-            ? themeColors.grey
+            ? themeColors.white
             : type === 3
-            ? themeColors.grey
-            : themeColors.grey,
+            ? themeColors.white
+            : themeColors.success,
+        opacity: (type === 2 || type === 3) ? 0.7 : 1,
       }}
     >
       <Text
@@ -542,10 +540,10 @@ export function MFAddFriendButton({
             type === 1
               ? themeColors.white
               : type === 2
-              ? themeColors.text
+              ? themeColors.success
               : type === 3
-              ? themeColors.orange
-              : themeColors.success,
+              ? themeColors.textSecondary
+              : themeColors.white,
           fontWeight: 900,
         }}
       >
@@ -554,11 +552,9 @@ export function MFAddFriendButton({
             ? "Adicionar amigo"
             : "Pedido enviado"
           : type === 2
-          ? "Amigo"
+          ? "✓ Amigo"
           : type === 3
-          ? !isPressed
-            ? "Cancelar solicitação"
-            : "Cancelado"
+          ? "Pedido enviado"
           : type === 4
           ? !isPressed
             ? "Aceitar solicitação"

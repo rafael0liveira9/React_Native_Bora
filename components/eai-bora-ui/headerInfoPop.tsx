@@ -10,7 +10,7 @@ import {
 } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Linking,
   Pressable,
@@ -54,6 +54,16 @@ export default function HeaderPopUp({
     createdByUrl = "https://www.linkedin.com/in/rafael-oliveira-18934a160/";
 
   const { viewMode, setViewMode, hasCompany } = useViewMode();
+
+  useEffect(() => {
+    console.log("📋 MODAL INFO - Modal aberto");
+    console.log("🏢 MODAL INFO - hasCompany:", hasCompany);
+    if (hasCompany) {
+      console.log("✅ MODAL INFO - Botão de modo de visualização SERÁ exibido");
+    } else {
+      console.log("❌ MODAL INFO - Botão de modo de visualização NÃO será exibido");
+    }
+  }, [hasCompany]);
 
   return (
     <View style={globalStyles.headerInfoBox}>

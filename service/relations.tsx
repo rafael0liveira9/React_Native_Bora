@@ -72,7 +72,7 @@ export async function newFriendRequest({
     }
 
     const body = {
-      id: id,
+      friendId: id,
     };
 
     const response = await axios.post(`${API_URL}/friends-request-post`, body, {
@@ -81,11 +81,9 @@ export async function newFriendRequest({
       },
     });
 
-    if (!!response.data) {
-      return response.data;
-    }
+    return response.data;
   } catch (error: any) {
-    return {
+    throw {
       status: error?.status,
       message:
         error?.response?.data?.message ||

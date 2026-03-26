@@ -62,15 +62,28 @@ export default function MFMainHeader({
 
   async function Logout() {
     try {
+      console.log("🚪 LOGOUT - Iniciando logout...");
       setIsLoading(true);
-      const keysToDelete = ["userToken", "userName", "userType", "userId"];
+
+      // Verificar se tem companyId antes de deletar
+      const companyId = await SecureStore.getItemAsync("userCompanyId");
+      if (companyId) {
+        console.log("🏢 LOGOUT - CompanyId encontrado:", companyId);
+      } else {
+        console.log("❌ LOGOUT - Nenhum companyId encontrado");
+      }
+
+      console.log("🗑️ LOGOUT - Excluindo dados do SecureStore...");
+      const keysToDelete = ["userToken", "userName", "userType", "userId", "userCompanyId", "viewMode"];
       await Promise.all(
         keysToDelete.map((key) => SecureStore.deleteItemAsync(key))
       );
+      console.log("✅ LOGOUT - Todos os dados removidos (incluindo companyId)!");
+
       setIsLoading(false);
       router.replace("/(auth)");
     } catch (error) {
-      console.error("Erro ao limpar SecureStore:", error);
+      console.error("❌ LOGOUT - Erro ao limpar SecureStore:", error);
       setIsLoading(false);
     }
   }

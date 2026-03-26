@@ -9,6 +9,7 @@ import {
   getMyFriends,
   sendFriendRequest,
 } from "@/service/friendship";
+import { getMyData } from "@/service/user";
 import { globalStyles } from "@/styles/global";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
@@ -35,6 +36,7 @@ export default function PeopleScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [token, setToken] = useState("");
   const [userId, setUserId] = useState("");
+  const [clientId, setClientId] = useState<number>(0);
   const [friendships, setFriendships] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
 
@@ -52,7 +54,17 @@ export default function PeopleScreen() {
   async function loadUserData() {
     const userToken = await SecureStore.getItemAsync("userToken");
     const id = await SecureStore.getItemAsync("userId");
-    if (userToken) setToken(userToken);
+    if (userToken) {
+      setToken(userToken);
+
+      // Buscar dados do usuário para pegar o clientId
+      const userData = await getMyData({ token: userToken });
+      console.log('👤 Dados do usuário:', userData);
+      if (userData?.user?.client?.id) {
+        setClientId(userData.user.client.id);
+        console.log('👤 ClientId setado:', userData.user.client.id);
+      }
+    }
     if (id) setUserId(id);
   }
 
@@ -81,17 +93,22 @@ export default function PeopleScreen() {
   }
 
   async function loadFriendships() {
-    const [requestsRes, friendsRes] = await Promise.all([
-      getFriendRequests(token),
-      getMyFriends(token),
-    ]);
+    const friendsData = await getMyFriends(token);
+    console.log('📊 Dados recebidos:', JSON.stringify(friendsData, null, 2));
 
-    if (requestsRes?.friendsRequest) {
-      setFriendships(requestsRes.friendsRequest);
-    }
+    if (friendsData) {
+      // Combina requests (enviados) e receives (recebidos) em friendships
+      const allFriendships = [
+        ...(friendsData.requests || []),
+        ...(friendsData.receives || []),
+      ];
+      console.log('📊 Total friendships:', allFriendships.length);
+      console.log('📊 Total friends:', (friendsData.friends || []).length);
 
-    if (friendsRes?.friends) {
-      setFriends(friendsRes.friends);
+      setFriendships(allFriendships);
+
+      // Amigos aceitos
+      setFriends(friendsData.friends || []);
     }
   }
 
@@ -104,75 +121,106 @@ export default function PeopleScreen() {
 
   function getFriendshipStatus(personId: number): number {
     // Type 1=não amigo 2=amigo 3=pedido enviado 4=pedido recebido
+    console.log(`🔍 Verificando status para personId=${personId}, clientId=${clientId}`);
+    console.log(`🔍 Total friends:`, friends.length);
+    console.log(`🔍 Total friendships:`, friendships.length);
 
     // Check if already friends
     const isFriend = friends.find(
       (f) =>
-        (f.sender === parseInt(userId) && f.friend === personId) ||
-        (f.friend === parseInt(userId) && f.sender === personId)
+        (f.sender === clientId && f.friend === personId) ||
+        (f.friend === clientId && f.sender === personId)
     );
-    if (isFriend && isFriend.accept === 1) return 2; // Amigo
+    console.log(`🔍 isFriend:`, isFriend);
+    if (isFriend && isFriend.accept === 1) {
+      console.log(`✅ Status: 2 (Amigo)`);
+      return 2; // Amigo
+    }
 
     // Check if there's a pending request sent by me
     const sentRequest = friendships.find(
       (f) =>
-        f.sender === parseInt(userId) && f.friend === personId && f.accept === 0
+        f.sender === clientId && f.friend === personId && f.accept === 0
     );
-    if (sentRequest) return 3; // Pedido enviado
+    console.log(`🔍 sentRequest:`, sentRequest);
+    if (sentRequest) {
+      console.log(`✅ Status: 3 (Pedido enviado)`);
+      return 3; // Pedido enviado
+    }
 
     // Check if there's a pending request received
     const receivedRequest = friendships.find(
       (f) =>
-        f.friend === parseInt(userId) && f.sender === personId && f.accept === 0
+        f.friend === clientId && f.sender === personId && f.accept === 0
     );
-    if (receivedRequest) return 4; // Pedido recebido
+    console.log(`🔍 receivedRequest:`, receivedRequest);
+    if (receivedRequest) {
+      console.log(`✅ Status: 4 (Pedido recebido)`);
+      return 4; // Pedido recebido
+    }
 
+    console.log(`✅ Status: 1 (Não amigo)`);
     return 1; // Não amigo
   }
 
   async function handleAddFriend(personId: number, friendshipStatus: number) {
-    if (friendshipStatus === 1) {
-      // Enviar pedido
-      const res = await sendFriendRequest(token, personId);
-      if (res?.message === "Solicitação de amizade enviada.") {
-        Toast.show({
-          type: "success",
-          text1: "✅ Pedido enviado!",
-        });
-        loadFriendships();
-      } else {
-        Toast.show({
-          type: "error",
-          text1: `❌ ${res?.message}`,
-        });
-      }
-    } else if (friendshipStatus === 4) {
-      // Aceitar pedido recebido
-      const request = friendships.find(
-        (f) =>
-          f.friend === parseInt(userId) &&
-          f.sender === personId &&
-          f.accept === 0
-      );
-      if (request) {
-        const res = await acceptFriendRequest(token, request.id);
-        if (res?.message === "Solicitação aceita.") {
+    try {
+      if (friendshipStatus === 1) {
+        // Enviar pedido
+        console.log('📤 Enviando pedido para:', personId);
+        const res = await sendFriendRequest(token, personId);
+        console.log('📤 Resposta:', res);
+        if (res?.success || res?.data) {
           Toast.show({
             type: "success",
-            text1: "✅ Amizade aceita!",
+            text1: res?.message || "✅ Pedido enviado!",
           });
           loadFriendships();
+        }
+      } else if (friendshipStatus === 4) {
+        // Aceitar pedido recebido
+        console.log('✅ Procurando pedido para aceitar...');
+        console.log('✅ clientId:', clientId, 'personId:', personId);
+
+        const request = friendships.find(
+          (f) =>
+            f.friend === clientId &&
+            f.sender === personId &&
+            f.accept === 0
+        );
+        console.log('✅ Pedido encontrado:', request);
+
+        if (request) {
+          console.log('✅ Aceitando pedido. Sender:', request.sender);
+          const res = await acceptFriendRequest(token, request.sender, true);
+          console.log('✅ Resposta:', res);
+
+          if (res?.success || res?.data) {
+            Toast.show({
+              type: "success",
+              text1: res?.message || "✅ Amizade aceita!",
+            });
+            loadFriendships();
+          }
         } else {
-          Toast.show({
-            type: "error",
-            text1: `❌ ${res?.message}`,
-          });
+          console.log('❌ Pedido não encontrado!');
         }
       }
+    } catch (error: any) {
+      console.log('❌ Erro:', error);
+      Toast.show({
+        type: "error",
+        text1: `❌ ${error?.message || "Erro ao processar ação"}`,
+      });
     }
   }
 
   function handleViewProfile(person: any, friendshipStatus: number) {
+    console.log('🔗 Navegando para perfil:', person);
+    console.log('🔗 userId:', person.userId);
+    console.log('🔗 clientId:', person.id);
+    console.log('🔗 friendStatus:', friendshipStatus);
+
     router.push({
       pathname: "/(stack)/userProfile",
       params: {

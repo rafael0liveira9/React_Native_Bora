@@ -77,7 +77,7 @@ export async function sendFriendRequest(token: string, friendId: number) {
 
     return response.data;
   } catch (error: any) {
-    return {
+    throw {
       status: error?.status,
       message:
         error?.response?.data?.message ||
@@ -87,7 +87,7 @@ export async function sendFriendRequest(token: string, friendId: number) {
   }
 }
 
-export async function acceptFriendRequest(token: string, friendshipId: number) {
+export async function acceptFriendRequest(token: string, senderId: number, accept: boolean = true) {
   try {
     if (!API_URL) {
       throw new Error("API URL não encontrada.");
@@ -95,7 +95,10 @@ export async function acceptFriendRequest(token: string, friendshipId: number) {
 
     const response = await axios.put(
       `${API_URL}/friends-accept`,
-      { id: friendshipId },
+      {
+        sender: senderId,
+        accept: accept
+      },
       {
         headers: {
           Authorization: token,
@@ -105,7 +108,7 @@ export async function acceptFriendRequest(token: string, friendshipId: number) {
 
     return response.data;
   } catch (error: any) {
-    return {
+    throw {
       status: error?.status,
       message:
         error?.response?.data?.message ||

@@ -21,6 +21,7 @@ interface ViewModeContextType {
   companyId: string | null;
   companyData: CompanyData | null;
   refreshCompanyData: () => Promise<void>;
+  refreshViewMode: () => Promise<void>;
 }
 
 const ViewModeContext = createContext<ViewModeContextType | undefined>(
@@ -48,35 +49,52 @@ export function ViewModeProvider({ children }: { children: React.ReactNode }) {
 
   async function loadViewMode() {
     try {
-      // Verificar se usuário tem empresa
+      console.log("📱 VIEWMODE - Carregando modo de visualização...");
+
+      // Ler companyId do SecureStore
       const storedCompanyId = await SecureStore.getItemAsync("userCompanyId");
+
+      if (storedCompanyId) {
+        console.log("🏢 VIEWMODE - CompanyId encontrado no SecureStore:", storedCompanyId);
+        console.log("✅ VIEWMODE - hasCompany = true");
+      } else {
+        console.log("❌ VIEWMODE - CompanyId NÃO encontrado no SecureStore");
+        console.log("❌ VIEWMODE - hasCompany = false");
+      }
+
+      // Definir hasCompany baseado SOMENTE no SecureStore
       setCompanyId(storedCompanyId);
       setHasCompany(!!storedCompanyId);
 
-      // Se tem empresa, buscar dados da empresa
-      if (storedCompanyId) {
-        await fetchCompanyData(storedCompanyId);
-      }
-
       // Se não tem empresa, força modo cliente
       if (!storedCompanyId) {
+        console.log("👤 VIEWMODE - Forçando modo cliente");
         setViewModeState("client");
         await SecureStore.setItemAsync("viewMode", "client");
         return;
       }
 
-      // Carregar preferência salva
+      // Se tem empresa, buscar dados da empresa
+      console.log("📊 VIEWMODE - Buscando dados da empresa...");
+      await fetchCompanyData(storedCompanyId);
+
+      // Carregar preferência de viewMode salva
       const savedMode = await SecureStore.getItemAsync("viewMode");
+      console.log("🎯 VIEWMODE - Modo salvo:", savedMode || "nenhum");
+
       if (savedMode === "client" || savedMode === "company") {
+        console.log(`✅ VIEWMODE - Definindo modo: ${savedMode}`);
         setViewModeState(savedMode);
       } else {
-        // Padrão é cliente
+        console.log("✅ VIEWMODE - Definindo modo padrão: client");
         setViewModeState("client");
         await SecureStore.setItemAsync("viewMode", "client");
       }
     } catch (error) {
-      console.error("Erro ao carregar modo de visualização:", error);
+      console.error("❌ VIEWMODE - Erro ao carregar modo de visualização:", error);
       setViewModeState("client");
+      setHasCompany(false);
+      setCompanyId(null);
     }
   }
 
@@ -104,6 +122,11 @@ export function ViewModeProvider({ children }: { children: React.ReactNode }) {
     if (companyId) {
       await fetchCompanyData(companyId);
     }
+  }
+
+  async function refreshViewMode() {
+    console.log("🔄 VIEWMODE - Refresh solicitado");
+    await loadViewMode();
   }
 
   async function setViewMode(mode: ViewMode) {
@@ -135,6 +158,7 @@ export function ViewModeProvider({ children }: { children: React.ReactNode }) {
         companyId,
         companyData,
         refreshCompanyData,
+        refreshViewMode,
       }}
     >
       {children}

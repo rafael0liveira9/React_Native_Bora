@@ -1,10 +1,7 @@
-import MFStackEditSubtitle from "@/components/eai-bora-ui/stackEditSubtitle";
 import { Colors } from "@/constants/Colors";
 import { useTheme } from "@/context/ThemeContext";
 import { getPublicEvents } from "@/service/events";
 import { globalStyles } from "@/styles/global";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -77,8 +74,10 @@ export default function EventsScreen() {
         } else {
           // Filter out duplicates before adding
           setEvents((prev) => {
-            const existingIds = new Set(prev.map(e => e.id));
-            const newEvents = result.events.filter((e: any) => !existingIds.has(e.id));
+            const existingIds = new Set(prev.map((e) => e.id));
+            const newEvents = result.events.filter(
+              (e: any) => !existingIds.has(e.id)
+            );
             return [...prev, ...newEvents];
           });
         }
@@ -149,10 +148,14 @@ export default function EventsScreen() {
       return {
         label: `📅 ${formattedDate} às ${formattedTime}`,
         color: themeColors.warning,
-        emoji: "📅"
+        emoji: "📅",
       };
     } else if (now >= start && now <= end) {
-      return { label: "🔥 Acontecendo agora", color: themeColors.danger, emoji: "🔥" };
+      return {
+        label: "🔥 Acontecendo agora",
+        color: themeColors.danger,
+        emoji: "🔥",
+      };
     } else {
       return { label: "Encerrado", color: themeColors.themeGrey, emoji: "" };
     }
@@ -351,7 +354,7 @@ export default function EventsScreen() {
               }}
               numberOfLines={1}
             >
-              Evento criado por: {item.company.name || item.company.description || "Empresa"}
+              Evento de {item.company.name || "Empresa"}
             </Text>
             <MaterialIcons
               name="chevron-right"
@@ -366,10 +369,7 @@ export default function EventsScreen() {
 
   const renderEmptyState = () => (
     <View
-      style={[
-        globalStyles.flexc,
-        { paddingTop: 100, paddingHorizontal: 40 },
-      ]}
+      style={[globalStyles.flexc, { paddingTop: 100, paddingHorizontal: 40 }]}
     >
       <MaterialIcons
         name="event-busy"

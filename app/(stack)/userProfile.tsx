@@ -83,12 +83,19 @@ export default function UserProfile() {
     try {
       switch (friendStatus) {
         case 1: // Adicionar amigo
-          await newFriendRequest({ id: parseInt(clientId as string), token });
-          setFriendStatus(3);
-          Toast.show({
-            type: "success",
-            text1: "Solicitação enviada!",
-          });
+          const response = await newFriendRequest({ id: parseInt(clientId as string), token });
+          if (response?.success || response?.data) {
+            setFriendStatus(3);
+            Toast.show({
+              type: "success",
+              text1: response?.message || "Solicitação enviada!",
+            });
+          } else if (response?.message) {
+            Toast.show({
+              type: "error",
+              text1: response.message,
+            });
+          }
           break;
 
         case 3: // Cancelar solicitação
@@ -117,11 +124,10 @@ export default function UserProfile() {
           });
           break;
       }
-    } catch (error) {
-      console.error("Erro na ação de amizade:", error);
+    } catch (error: any) {
       Toast.show({
         type: "error",
-        text1: "Erro ao processar ação",
+        text1: error?.message || "Erro ao processar ação",
       });
     }
   }

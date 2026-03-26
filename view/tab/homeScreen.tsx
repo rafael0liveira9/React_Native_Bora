@@ -441,21 +441,42 @@ export default function HomeScren() {
     friendStatus: number;
     id: number;
   }) {
-    switch (friendStatus) {
-      case 1:
-        await newFriendRequest({ id: id, token: token! });
-        break;
+    try {
+      switch (friendStatus) {
+        case 1:
+          const response = await newFriendRequest({ id: id, token: token! });
+          if (response?.success || response?.data) {
+            Toast.show({
+              type: "success",
+              text1: response?.message || "Solicitação enviada!",
+            });
+          }
+          break;
 
-      case 3:
-        await acceptFriendRequest({ id: id, token: token!, accept: false });
-        break;
+        case 3:
+          await acceptFriendRequest({ id: id, token: token!, accept: false });
+          Toast.show({
+            type: "info",
+            text1: "Solicitação cancelada",
+          });
+          break;
 
-      case 4:
-        await acceptFriendRequest({ id: id, token: token!, accept: true });
-        break;
+        case 4:
+          await acceptFriendRequest({ id: id, token: token!, accept: true });
+          Toast.show({
+            type: "success",
+            text1: "Agora vocês são amigos!",
+          });
+          break;
 
-      default:
-        break;
+        default:
+          break;
+      }
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: error?.message || "Erro ao processar ação",
+      });
     }
   }
 
